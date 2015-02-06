@@ -1,6 +1,19 @@
 ////////////////////////////////////////////////////////////////////////////////
 // SYNTHDEFS
+
+/*////////////////////////////////////////////////////////////////////////////////
+
+
+State(\mass).doInit();
+State(\mass).doStart();
+State(\mass).doStop();
+
+
+*/////////////////////////////////////////////////////////////////////////////////
+
+LogWindow(\mass, [\LCDevice, \mass, \error]).front;
 State(\mass).clear;
+State(\mass).push;
 State(\mass).autoEnvirWindow = true;
 
 State(\mass).initActions.add({
@@ -226,6 +239,7 @@ State(\mass).initActions.add({
 
 	~lc.notNil.if({ ~lc.free });
 	~lc = LCDevice();
+	~lc.connect();
 	~lc.knobs.do(_.ringStyle_(\fill));
 
 	// Play button
@@ -262,7 +276,7 @@ State(\mass).initActions.add({
 ////////////////////////////////////////////////////////////////////////////////
 
 State(\mass).startActions.add({
-	~knobs = [];
+	~knobs = List();
 
 	////////////////////////////////////////////////////////////////////////////////
 	// low
@@ -336,6 +350,4 @@ State(\mass).stopActions.add({
 	~lowTrigger.cv.value = 0;
 	~knobs.do(_.cv_(nil));
 });
-
-State(\mass).doInit();
 
