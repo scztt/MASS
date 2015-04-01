@@ -4,31 +4,56 @@
 	~voiceCount.collect({
 		| i |
 		[
-			Scale.dorian.degreeToFreq(7.rand, base.midicps, 2.rand),
-			Scale.dorian.degreeToFreq([1, 4, 6][i % 3], base.midicps, 2.rand),
-			Scale.dorian.degreeToFreq([3, 5, 8][i % 3], base.midicps, 2.rand),
-			Scale.dorian.degreeToFreq([2, 7, 11][i % 3], base.midicps, 2.3.rand.floor),
-			Scale.dorian.degreeToFreq([1, 5, 10][i % 3], base.midicps, 1 + 2.rand.floor),
-			Scale.dorian.degreeToFreq([2, 6, 13][i % 3], base.midicps, 1 + 2.rand),
-			Scale.dorian.degreeToFreq([2, 4, 6, 13][i % 4], base.midicps, 3.rand),
+			Scale.dorian.degreeToFreq([1, 4, 6], base.midicps, 2.rand),
+			Scale.dorian.degreeToFreq([3, 5, 8], base.midicps, 2.rand),
+			Scale.dorian.degreeToFreq([0, 3, 7, 11], base.midicps, 2.rand),
+			Scale.dorian.degreeToFreq([1, 5, 10], base.midicps, 2.3.rand),
+			Scale.dorian.degreeToFreq([-3, 1, 6, 13], base.midicps, 1 + 2.rand),
+			Scale.dorian.degreeToFreq([2, 6, 13], base.midicps, 1 + 2.rand),
+			Scale.dorian.degreeToFreq([2, 4, 6, 13], base.midicps, 3.rand),
+			Scale.dorian.degreeToFreq([-1, 3, 8, 15], base.midicps, 3.rand),
+			// Scale.dorian.degreeToFreq(7.rand, base.midicps, 2.rand),
+			// Scale.dorian.degreeToFreq([1, 4, 6][i % 3], base.midicps, 2.rand),
+			// Scale.dorian.degreeToFreq([3, 5, 8][i % 3], base.midicps, 2.rand),
+			// Scale.dorian.degreeToFreq([2, 7, 11][i % 3], base.midicps, 2.3.rand.floor),
+			// Scale.dorian.degreeToFreq([1, 5, 10][i % 3], base.midicps, 1 + 2.rand.floor),
+			// Scale.dorian.degreeToFreq([2, 6, 13][i % 3], base.midicps, 1 + 2.rand),
+			// Scale.dorian.degreeToFreq([2, 4, 6, 13][i % 4], base.midicps, 3.rand),
 		]
 	});
 };
+
+(
+Pdef(\chTest, Pbind(
+	\freq, Pseq(Scale.dorian.degreeToFreq([1, 4, 6], 30.midicps, 1), inf),
+	\freq, Pseq(Scale.dorian.degreeToFreq([3, 5, 8], 30.midicps, 1), inf),
+	\freq, Pseq(Scale.dorian.degreeToFreq([0, 3, 7, 11], 30.midicps, 1), inf),
+	\freq, Pseq(Scale.dorian.degreeToFreq([1, 5, 10], 30.midicps, 1), inf),
+	\freq, Pseq(Scale.dorian.degreeToFreq([-3, 1, 6, 13], 30.midicps, 1), inf),
+	\freq, Pseq(Scale.dorian.degreeToFreq([2, 6, 13], 30.midicps, 1), inf),
+	\freq, Pseq(Scale.dorian.degreeToFreq([2, 4, 6, 13], 30.midicps, 1), inf),
+	\freq, Pseq(Scale.dorian.degreeToFreq([-1, 3, 8, 15], 30.midicps, 1), inf),
+	\dur, 0.1,
+	\legato, 1.2
+)).play;
+);
 
 ~chordSequenceLow = ~chordSequence.(30);
 ~chordSequenceHigh = ~chordSequence.(30 + 24);
 
 ~kill_bus = Bus.audio(s, 1);
+~kill_bus.scope
 
-{
-
-}.play(outbus: ~kill_bus);
+Ndef(\killer, {
+	//Decay2.ar(Impulse.ar(1/4), 0.1, 3) ;
+	SinOsc.ar(0.1, 0, 0.5)
+}).play(out: ~kill_bus.index);
 
 ~less = NodeProxy(s, \audio, 2);
 ~less.clear;
 
 (
-~less.source = {
+SynthDef(\lesser, {
 	var pulse, pulse2, phase, noise, noise2, jumps, phases, density,
 	pulseAmt, freqFade, sig, freqs, freqMult, fx, clip, filtSig, volume,
 	bSig, a, b, c, d, e, f, g, h,
@@ -38,7 +63,7 @@
 	fx = \fx.kr(0).lag(5);
 	clip = \clip.kr(5).lag(8);
 	kill = InFeedback.ar(~kill_bus.index);
-	kill = MouseX.kr(0.01, 1);
+	//kill = MouseX.kr(0.01, 1);
 	//kill = EnvGen.kr(Env.perc(0.01, 10), gate: \t_kill.tr(0)).poll;
 	killEnv = kill;
 	killSig = RLPF.ar(LFSaw.ar(80) * WhiteNoise.ar, 180, 8) * 2;
@@ -127,7 +152,7 @@
 	);
 
 	Out.ar(\out.ir(0), sig);
-};
+}).addReplace;
 )
 
 ~less.set(\density, 0.7);
