@@ -23,18 +23,20 @@
 	});
 };
 
+
+
 (
+var scale = Scale.dorian;
 Pdef(\chTest, Pbind(
-	\freq, Pseq(Scale.dorian.degreeToFreq([1, 4, 6], 30.midicps, 1), inf),
-	\freq, Pseq(Scale.dorian.degreeToFreq([3, 5, 8], 30.midicps, 1), inf),
-	\freq, Pseq(Scale.dorian.degreeToFreq([0, 3, 7, 11], 30.midicps, 1), inf),
-	\freq, Pseq(Scale.dorian.degreeToFreq([1, 5, 10], 30.midicps, 1), inf),
-	\freq, Pseq(Scale.dorian.degreeToFreq([-3, 1, 6, 13], 30.midicps, 1), inf),
-	\freq, Pseq(Scale.dorian.degreeToFreq([2, 6, 13], 30.midicps, 1), inf),
-	\freq, Pseq(Scale.dorian.degreeToFreq([2, 4, 6, 13], 30.midicps, 1), inf),
-	\freq, Pseq(Scale.dorian.degreeToFreq([-1, 3, 8, 15], 30.midicps, 1), inf),
-	\dur, 0.1,
-	\legato, 1.2
+	\freq, Pseq([scale.degreeToFreq([	1, 4, 6], 30.midicps, 1)], inf),
+	\freq, Pseq([scale.degreeToFreq([	0, 3, 8], 30.midicps, 1)], inf),
+	\freq, Pseq([scale.degreeToFreq([	0, 3, 6, 11], 30.midicps, 1)], inf),
+	\freq, Pseq([scale.degreeToFreq([	-1, 1, 5, 10], 30.midicps, 1)], inf),
+	\freq, Pseq([scale.degreeToFreq([	-3, 1, 6, 13], 30.midicps, 1)], inf),
+	\freq, Pseq([scale.degreeToFreq([	2, 4, 6, 13], 30.midicps, 1)], inf),
+	\freq, Pseq([scale.degreeToFreq([	-1, 3, 8, 15], 30.midicps, 1)], inf),
+	\dur, 0.2,
+	\legato, 3.9
 )).play;
 );
 
