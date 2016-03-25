@@ -142,7 +142,9 @@ State(\mass).initActions.add({
 						cut = \cut.kr(0.0).lag(5);
 
 						sig = (WhiteNoise.ar(1) + sig) * hpEnv;
-						sig = sig + (jumps[i] * pulseAmt * density.range(0.3, 2));
+						// sig = sig + (sig * Lag3UD.ar(jumps[i] * pulseAmt * density.range(0.3, 10), 0.001, 0.7));
+						// sig = sig * Lag3UD.ar(jumps[i], 0.001, 0.2);
+
 						sig = HPF.ar(sig, 20000 - (density.range(9000, 20000) * hpEnv));
 						sig = sig * LPF.ar(
 							LFPulse.ar(
