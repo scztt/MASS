@@ -158,7 +158,7 @@ State(\mass).initActions.add({
 							, density.linlin(0, 1, 400, 1300)
 						);
 
-						sig = HPF.ar(sig, cut.linexp(0.25, 1, 10, 21000))
+						sig = HPF.ar(sig, cut.linexp(0.25, 1, 10, 21000));
 					};
 					sig
 				});
