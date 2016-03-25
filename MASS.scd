@@ -98,8 +98,11 @@ State(\mass).initActions.add({
 				noise = phases.collect({
 					| phase, i |
 					var sig, degree, freq, freq1, freq2, saw, hpEnv, scale, bump;
-					hpEnv = max(0, SinOsc.kr(1 / 100, phase.lag(0.1)).abs - density.linlin(0, 1, 0.55, 0.42)).lag(0.2);
-					// hpEnv = max(0, SinOsc.kr(0.007, phase.lag(0.2)).abs - density.exprange(0.9, 0.22)); // greater
+					if (lesser) {
+						hpEnv = max(0, SinOsc.kr(1 / 100, phase.lag(0.1)).abs - density.linlin(0, 1, 0.55, 0.42)).lag(0.2);
+					} {
+						hpEnv = max(0, SinOsc.kr(0.007, phase.lag(0.2)).abs - density.exprange(0.9, 0.22)); // greater
+					};
 					freq = freqs[i];
 
 					if (i < 40) {
