@@ -199,8 +199,22 @@ State(\mass).initActions.add({
 				sig = LeakDC.ar(sig);
 
 
+				// sig = sig.postln.flatten;
+				sweep = \sweep.kr(0).lag3(2).linlin(0, 1, 0, noise.size - 1);
+				noiseScrambled = noise.scramble;
+				sweptSig = SoftClipAmp8.ar([
+					LeakDC.ar(SelectXFocus.ar(sweep - 1, noiseScrambled, 0.25)),
+					LeakDC.ar(SelectXFocus.ar(sweep + 1, noiseScrambled, 0.25))
+				], 2, density.linlin(0, 1, -60, 3).dbamp);
 
 				sig = Compander.ar(sig, sig.sum / 8, 0.6, 1/6, 1/8, 1, 5);
+
+				if (lesser) {
+					sig = sig + (Pluck.ar(LagUD.kr(Slope.kr(sweep).abs.min(10) * 0.1, 0.1, 6) * sweptSig, sweptSig, 0.3, 1/10, -4.8, 0.85));
+				} {
+					sig = sig + (0.1 * Pluck.ar(sweptSig, sweptSig, 0.3, 1/30, 0.6, 0.9).pow(2));
+				};
+
 				sig = -16.dbamp * sig * volume * EnvGen.kr(Env([0, 1, 1, 0], [10, 5, 20], releaseNode: 2),
 					gate: \gate.kr(1),
 					doneAction: 2
