@@ -19,7 +19,7 @@ State(\mass).initActions.add({
 	/////////////////////////////////////////////////////////////////////////////////
 
 	(
-		~voiceCount = 40;
+		~voiceCount = 60;
 		~scale = Scale.dorian;
 		~chordSequence = {
 			|count, base|
