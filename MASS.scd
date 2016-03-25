@@ -248,29 +248,6 @@ State(\mass).startActions.add {
 // STATES
 ////////////////////////////////////////////////////////////////////////////////
 
-SynthDef(\let, {
-	var env, sig;
-	env = EnvGen.kr(Env.perc(0.01, 20, curve: -16), doneAction:2);
-	sig = RLPF.ar(LFSaw.ar(env.range(30, 44) + Rand(0, [2.0, 3.0])), 40,  0.01) * env * 0.1;
-	//sig = sig.fold2(0.6);
-	sig = sig.tanh;
-	sig = RLPF.ar(sig, 260);
-	sig = HPF.ar(sig, 17);
-	sig = sig.tanh * 1.4;
-	Out.ar(\out.ir([0, 1]), sig);
-}).add;
-
-
-
-~lowFx.action_(e({
-	|cv|
-	var val = (cv.value * ~chordSequenceLow.size * 0.99999).floor.asInteger;
-	if (~lastLow != val) {
-		~lastLow = val;
-		Log(\mass).info("LOW SEQUENCE %%", val.asString().padLeft(val + 1));
-		Log(\mass).info(~chordSequence[val].asString())
-	}
-}))
 
 });
 	////////////////////////////////////////////////////////////////////////////////
