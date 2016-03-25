@@ -50,7 +50,7 @@ State(\mass).initActions.add({
 			SynthDef((\mass ++ "." ++ name).asSymbol, {
 				var pulse, pulse2, phase, noise, noise2, jumps, phases, density, distAmt,
 				pulseAmt, freqFade, sig, freqs, freqMult, fx, clip, filtSig, volume,
-				bSig, cut, densityMult;
+				bSig, cut, densityMult, sweep, sweptSig, noiseScrambled, pulseVol, pulseSpeed, pulseImp;
 
 				////////////////////////////////////////////////////////////////
 				// CONTROLS
@@ -210,13 +210,16 @@ State(\mass).initActions.add({
 			},
 			metadata:(
 				specs: (
-					volume:		ControlSpec(-40, 0,  			default: -40),
+					volume:		ControlSpec(-90, 0, warp: -4, 	default: -90),
 					density: 	ControlSpec(0, 1, 				default: 0),
 					fx:			ControlSpec(0, ~chordSequenceLow.size - 0.5,
-																default: 0),
+						default: 0),
 					distAmt:	ControlSpec(0, 1, 				default: 0),
+					sweep:		ControlSpec(0, 1, 				default: 0),
 					clip:		ControlSpec(0, 1, warp:\sin,	default: 0),
 					cut:		ControlSpec(0, 1, warp:\sin,	default: 0),
+					pulseVol:	ControlSpec(-90, 0, warp: -4,	default: -90),
+					pulseSpeed:	ControlSpec(0, 3, 				default: 0),
 				)
 			)
 			).addReplace;
