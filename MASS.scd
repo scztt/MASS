@@ -237,11 +237,6 @@ State(\mass).initActions.add({
 	~distBuffer.zero();
 	~distBuffer.cheby([3.0, 0, -1.1, 0], asWavetable:true);
 
-	DistCurve(\mass1,
-		[-1, 0, 1],
-		[-1, 0, 1],
-		//Env([-1, 0, 1], [0.5, 0.5], [20, -20])
-	);
 	~t1 = Twister(\default);
 
 });
