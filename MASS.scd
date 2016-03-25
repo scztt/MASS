@@ -233,9 +233,9 @@ State(\mass).initActions.add({
 		~distBuffer = Buffer.alloc(s, 4092);
 	];
 
-	~distBuffer.cheby([3.1, 1.5, 1.5, -1, 1, 0, 1], asWavetable:true);
-	~distBuffer.cheby([3.1, 0, 1.6], asWavetable:true);
-
+	~distBuffer.plot;
+	~distBuffer.zero();
+	~distBuffer.cheby([3.0, 0, -1.1, 0], asWavetable:true);
 
 	DistCurve(\mass1,
 		[-1, 0, 1],
