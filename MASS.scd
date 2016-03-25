@@ -278,6 +278,13 @@ State(\mass).startActions.add({
 	~t1.row(2)[0].ledColor_(Color.grey());
 
 	////////////////////////////////////////////////////////////////////////////////
+	// GRID
+	CVGrid(\mass).rows_(4);
+	CVGrid(\mass).fromEnvir(~ctrl.envir,
+		*(~t1.knobs.collect(_.knobCV))
+	);
+	CVGrid(\mass).front;
+
 	////////////////////////////////////////////////////////////////////////////////
 	// TRIGGERS
 	~connections.free;
