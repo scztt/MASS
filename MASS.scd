@@ -174,16 +174,31 @@ State(\mass).initActions.add({
 					// structure: [[lf, lr], [rf, rr]] -> [[lf, rf], [lr, rr]] -> [lf, lr, rf, rr]
 					//[s[0], s[1]];
 				});
-				// sig = sig + RLPF.ar(Decay.ar( SelectX.ar(MouseY.kr(0, 3), Impulse.ar([0.5, 1, 2, 4])), 3) * sig, 50, 0.05, 4);
+				sig = Mix(sig).assertChannels(4);
+				sig = [sig[0] + sig[1], sig[2] + sig[3]]; // stereo
+
+				pulseVol = \pulseVol.kr(-90).lag(1).dbamp;
+				pulseSpeed = \pulseSpeed.kr(0).lag(1);
+				if (lesser) {
+					pulseImp = Impulse.ar([0.125, 0.25, 0.5, 1]);
+					//pulseImp = Lag3UD.ar(pulseImp, 0.0001, [5, 4, 3, 2]);
+					pulseImp = Env.perc(0.001, 1, curve:-4).ar(gate:pulseImp, timeScale: [10, 8, 6, 4]);
+					pulseImp = SelectX.ar(pulseSpeed, pulseImp) * pulseVol;
+
+					sig = sig + LPF.ar(LPF.ar(sig, 45), 45, pulseImp * -30) + LPF.ar(LPF.ar(sig, 400), 400, pulseImp * -4 );
+					[RunningMax.ar(sig), RunningMin.ar(sig)].poll;
+					sig
+				} {
+					pulseImp = Impulse.ar([0.125, 0.25, 0.5, 1]);
+					// pulseImp = Lag3UD.ar(pulseImp, 0.0001, [5, 4, 3, 2]).pow(2);
+					pulseImp = Env.perc(0.01, 1, curve:-4).ar(gate:pulseImp, timeScale: [10, 8, 6, 4]);
+					pulseImp = SelectX.ar(pulseSpeed, pulseImp) * pulseVol;
+					sig = (sig * 0.1) + LPF.ar(LPF.ar(sig, 45), 45, pulseImp * 800) + LPF.ar(LPF.ar(pulseImp * sig * -1, 640), 640, 3);
+				};
+				// sig = HPF.ar(Decay.ar( SelectX.ar(MouseY.kr(0, 3), Impulse.ar([0.5, 1, 2, 4])), 3) * sig, 18000, 0.05, 4);
 				sig = LeakDC.ar(sig);
 
-				sig = Mix(sig).assertChannels(2);
-				sig = sig + SoftClipAmp8.ar([
-					LeakDC.ar(SelectXFocus.ar(MouseX.kr(0, noise.size - 1), noise.scramble, 0.25)),
-					LeakDC.ar(SelectXFocus.ar(MouseX.kr(0, noise.size - 1), noise.scramble, 0.25))
-				], 2, density.linlin(0, 1, 0, 2));
 
-				Out.ar(100, noise);
 
 				sig = Compander.ar(sig, sig.sum / 8, 0.6, 1/6, 1/8, 1, 5);
 				sig = -16.dbamp * sig * volume * EnvGen.kr(Env([0, 1, 1, 0], [10, 5, 20], releaseNode: 2),
