@@ -43,7 +43,6 @@ State(\mass).initActions.add({
 		};
 		~chordSequenceLow 	= ~chordSequence.(~voiceCount , 30);
 		~chordSequenceHigh 	= ~chordSequence.(~voiceCount , 30 + 24);
-	);
 
 		~massDef = {
 			|name, lesser=true|
@@ -241,15 +240,12 @@ State(\mass).initActions.add({
 
 });
 
-State(\mass).startActions.add {
-
-};
 ////////////////////////////////////////////////////////////////////////////////
 // STATES
 ////////////////////////////////////////////////////////////////////////////////
 
+State(\mass).startActions.add({
 
-});
 	////////////////////////////////////////////////////////////////////////////////
 	// LOW
 	~t1.row(0)[0].knobCV 		= ~ctrl.lowVolume;
@@ -259,7 +255,6 @@ State(\mass).startActions.add {
 	~t1.row(1)[0].knobCV 		= ~ctrl.lowFx;
 	~t1.row(1)[3].knobCV		= ~ctrl.lowClip;
 
-State(\mass).startActions.add({
 	~t1.row(0)[0].buttonCV		= ~ctrl.lowToggle;
 	~t1.row(0)[0].toggle 		= true;
 	~t1.row(0)[0].ledColor_(Color.grey());
