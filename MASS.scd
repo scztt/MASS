@@ -45,19 +45,6 @@ State(\mass).initActions.add({
 		~chordSequenceHigh 	= ~chordSequence.(~voiceCount , 30 + 24);
 	);
 
-	~controls = [
-		~lowVolume = CV(ControlSpec(0, 1, warp: 6, default: 0.0)),
-		~lowDensity = CV(ControlSpec(0, 1, default: 0.0)),
-		~lowFx = CV(ControlSpec(0, 1, default: 0.0)),
-		~lowClip = CV(ControlSpec(0.0, 1.0, warp:\sin, default: 0.0)),
-		~lowDrop = CV(ControlSpec(0, 1, step: 1, default: 0)),
-
-		~highVolume = CV(ControlSpec(0, 1, warp: 6, default: 0.0)),
-		~highDensity = CV(ControlSpec(0, 1, default: 0.0)),
-		~highFx = CV(ControlSpec(0, 1, default: 0.0)),
-		~highCut = CV(ControlSpec(0, 1, warp:\sin, default: 0.0)),
-		~highDrop = CV(ControlSpec(0, 1, step: 1, default: 0)),
-	];
 		~massDef = {
 			|name, lesser=true|
 
@@ -219,6 +206,28 @@ State(\mass).initActions.add({
 		~massDef.(\lesser, true);
 		~massDef.(\greater, false);
 
+	~ctrl = ControlValueEnvir(BusControlValue);
+	~ctrl.use {
+		var lesser 			= 'mass.lesser'.asSynthDesc.metadata.specs;
+		var greater 		= 'mass.greater'.asSynthDesc.metadata.specs;
+
+		~lowVolume.spec		= lesser.volume;
+		~lowDensity.spec	= lesser.density;
+		~lowFx.spec 		= lesser.fx;
+		~lowClip.spec		= lesser.clip;
+		~lowDistAmt.spec	= lesser.distAmt;
+		// ~lowDrop.spec		= lesser.drop.postln;
+
+		~highVolume.spec 	= greater.volume;
+		~highDensity.spec 	= greater.density;
+		~highFx.spec		= greater.fx;
+		~highCut.spec 		= greater.cut;
+		~highDistAmt.spec	= greater.distAmt;
+		// ~highDrop.spec 		= greater.drop.postln;
+
+		~lowToggle			= OnOffControlValue(\off);
+		~highToggle			= OnOffControlValue(\off);
+	};
 
 	~resources.addAll [
 		~distBuffer = Buffer.alloc(s, 4092);
