@@ -252,13 +252,18 @@ State(\mass).initActions.add({
 		~lowFx.spec 		= lesser.fx;
 		~lowClip.spec		= lesser.clip;
 		~lowDistAmt.spec	= lesser.distAmt;
-		// ~lowDrop.spec		= lesser.drop.postln;
+		~lowSweep.spec		= lesser.sweep;
+		~lowPulseVol.spec	= lesser.pulseVol;
+		~lowPulseSpeed.spec	= lesser.pulseSpeed;
 
 		~highVolume.spec 	= greater.volume;
 		~highDensity.spec 	= greater.density;
 		~highFx.spec		= greater.fx;
 		~highCut.spec 		= greater.cut;
 		~highDistAmt.spec	= greater.distAmt;
+		~highSweep.spec		= greater.sweep;
+		~highPulseVol.spec	= greater.pulseVol;
+		~highPulseSpeed.spec= greater.pulseSpeed;
 		// ~highDrop.spec 		= greater.drop.postln;
 
 		~lowToggle			= OnOffControlValue(\off);
@@ -288,8 +293,11 @@ State(\mass).startActions.add({
 	~t1.row(0)[0].knobCV 		= ~ctrl.lowVolume;
 	~t1.row(0)[1].knobCV		= ~ctrl.lowDensity;
 	~t1.row(0)[2].knobCV		= ~ctrl.lowDistAmt;
+	~t1.row(0)[3].knobCV		= ~ctrl.lowSweep;
 
 	~t1.row(1)[0].knobCV 		= ~ctrl.lowFx;
+	~t1.row(1)[1].knobCV		= ~ctrl.lowPulseVol;
+	~t1.row(1)[2].knobCV		= ~ctrl.lowPulseSpeed;
 	~t1.row(1)[3].knobCV		= ~ctrl.lowClip;
 
 	~t1.row(0)[0].buttonCV		= ~ctrl.lowToggle;
@@ -301,8 +309,11 @@ State(\mass).startActions.add({
 	~t1.row(2)[0].knobCV 		= ~ctrl.highVolume;
 	~t1.row(2)[1].knobCV		= ~ctrl.highDensity;
 	~t1.row(2)[2].knobCV		= ~ctrl.highDistAmt;
+	~t1.row(2)[3].knobCV		= ~ctrl.highSweep;
 
 	~t1.row(3)[0].knobCV 		= ~ctrl.highFx;
+	~t1.row(3)[1].knobCV		= ~ctrl.highPulseVol;
+	~t1.row(3)[2].knobCV		= ~ctrl.highPulseSpeed;
 	~t1.row(3)[3].knobCV		= ~ctrl.highClip;
 
 	~t1.row(2)[0].buttonCV		= ~ctrl.highToggle;
@@ -333,6 +344,9 @@ State(\mass).startActions.add({
 				\fx: 		~ctrl.lowFx.asMap,
 				\clip: 		~ctrl.lowClip.asMap,
 				\distAmt:	~ctrl.lowDistAmt.asMap,
+				\sweep:		~ctrl.lowSweep.asMap,
+				\pulseVol:	~ctrl.lowPulseVol.asMap,
+				\pulseSpeed:~ctrl.lowPulseSpeed.asMap,
 				\distBuffer: ~distBuffer
 			]);
 		}.e);
@@ -356,6 +370,9 @@ State(\mass).startActions.add({
 				\fx: 		~ctrl.highFx.asMap,
 				\cut: 		~ctrl.highCut.asMap,
 				\distAmt:	~ctrl.highDistAmt.asMap,
+				\sweep:		~ctrl.highSweep.asMap,
+				\pulseVol:	~ctrl.highPulseVol.asMap,
+				\pulseSpeed:~ctrl.highPulseSpeed.asMap,
 				\distBuffer: ~distBuffer
 			]);
 		}.e);
