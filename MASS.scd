@@ -58,6 +58,166 @@ State(\mass).initActions.add({
 		~highCut = CV(ControlSpec(0, 1, warp:\sin, default: 0.0)),
 		~highDrop = CV(ControlSpec(0, 1, step: 1, default: 0)),
 	];
+		~massDef = {
+			|name, lesser=true|
+
+			SynthDef((\mass ++ "." ++ name).asSymbol, {
+				var pulse, pulse2, phase, noise, noise2, jumps, phases, density, distAmt,
+				pulseAmt, freqFade, sig, freqs, freqMult, fx, clip, filtSig, volume,
+				bSig, cut, densityMult;
+
+				////////////////////////////////////////////////////////////////
+				// CONTROLS
+				density 	= \density.kr(0).lag(5);
+				fx 			= \fx.kr(0).lag3(5);
+				clip 		= \clip.kr(5).lag(8);
+				distAmt		= \distAmt.kr(0);
+				densityMult = lesser.if(1, 10);
+
+				////////////////////////////////////////////////////////////////
+				// CONTROLS
+				phase = LFNoise2.kr(0.1).range(0.06, 0.09);
+				pulse = (
+					(Impulse.ar(3) * WhiteNoise.ar(2))
+					+ (Impulse.ar(1, phase) * WhiteNoise.ar(2))
+					+ (Impulse.ar(6, phase) * WhiteNoise.ar(1))
+				);
+
+				jumps = 2.collect({
+					PanAz.ar(
+						~voiceCount, pulse,
+						pos: LFNoise2.kr(0.06).range(-1,1),
+						width: LFNoise2.kr(0.07).range(
+							2 + (density * densityMult),
+							2 + (density * densityMult * 4)   // greater was *2?
+						)
+					)
+				}).sum;
+				jumps.assertChannels(~voiceCount);
+
+				jumps = jumps * EnvGen.kr(Env([0, 0, 1, 1], [4, 4, 20]), timeScale:5);
+				phases = jumps.collect({
+					| jump |
+					(2.0.rand + Integrator.ar(jump.abs.neg * 0.2, 1)) % (2 * pi);
+				});
+
+				pulseAmt = LFNoise2.kr(LFNoise2.kr(0.1).range(0.05, 0.2)).exprange(0.5, 1.0);
+				// pulseAmt = LFNoise2.kr(LFNoise2.kr(0.2).range(0.1, 0.3)).exprange(0.5, 2.0); // greater
+
+				freqs = phases.collect({
+					| p, i |
+					Select.kr(fx + Rand(-0.35, 0.5), ~chordSequenceLow.flop[i]);
+				});
+
+				noise = phases.collect({
+					| phase, i |
+					var sig, degree, freq, freq1, freq2, saw, hpEnv, scale, bump;
+					hpEnv = max(0, SinOsc.kr(1 / 100, phase.lag(0.1)).abs - density.linlin(0, 1, 0.55, 0.42)).lag(0.2);
+					// hpEnv = max(0, SinOsc.kr(0.007, phase.lag(0.2)).abs - density.exprange(0.9, 0.22)); // greater
+					freq = freqs[i];
+
+					if (i < 40) {
+						freq = freq * (density.linlin(0, 1, 1.0, 1 + Rand(-0.02, 0.02)) + [0.03.rand, 0.02.rand, 0.04.rand]);
+						saw = LFSaw.ar(freq).sum * density.linlin(0, 1, 0.55, 1.0) * [-1, 1].choose;
+						// greater
+						// freq = freq * (density.range(1.0, 1.01) + [0.03.rand, 0.02.rand, 0.04.rand]);
+						// saw = LFSaw.ar(freq).sum * density.range(0.2, 1.0);
+					} {
+						freq = freq * (density.linlin(0, 1, 1.0, Rand(-0.03, 0.03)) + [0.015.rand, 0.01.rand, 0.021.rand]);
+						saw = LFPulse.ar(freq, 0, density.linlin(0, 1, 0, 0.99)).sum * max(density - 0.5, 0) * [-1, 1].choose;
+						// greater
+						// freq = freq * (density.range(1, 1) + [0.03.rand, 0.01.rand, 0.02.rand]);
+						// saw = LFSaw.ar(freq).sum * max(density - 0.5, 0);
+					};
+
+					sig = saw;
+
+					if (lesser) {
+						sig = sig + (BrownNoise.ar(0.5 + density.linlin(0, 1, 0, 0.5)) * sig);
+						sig = sig * hpEnv;
+
+						sig = LPF.ar(sig, max(density.linexp(0, 1, 10, 16000) * hpEnv, 20));
+
+						filtSig = (
+							HPF.ar(sig, clip.range(500, 18000), mul: clip.range(1, 4.0))
+							+ LPF.ar(sig, clip.range(20000, 40), mul:0)
+						);
+						sig = XFade2.ar(sig, filtSig, clip.range(-1, 1));
+
+						sig = sig * LPF.ar(
+							in: LFPulse.ar(
+								freq: 	[20, 30, 60].choose,
+								iphase:	[0, 0.25, 0.5, 0.75, 1].wrapAt(i),
+								width:	LFDNoise3.kr(0.1).linexp(-1, 1, density.linlin(0, 1, 0.9, 0.3) * clip.linlin(0, 1, 1, 0.01), clip.linlin(0, 1, 1, 0.001))
+							).linlin(0, 1, 0.6 - clip.linexp(0, 1, 0.01, 0.6), 1),
+							freq: 20 + (density.linexp(0, 1, 40, 6600) * clip.linlin(0, 1, 1, 0.01))
+						);
+					} {
+						cut = \cut.kr(0.0).lag(5);
+
+						sig = (WhiteNoise.ar(1) + sig) * hpEnv;
+						sig = sig + (jumps[i] * pulseAmt * density.range(0.3, 2));
+						sig = HPF.ar(sig, 20000 - (density.range(9000, 20000) * hpEnv));
+						sig = sig * LPF.ar(
+							LFPulse.ar(
+								[20, 30, 60].choose,
+								(i % 2) * 0.5,
+								LFNoise2.kr(0.1).exprange(density.range(0.9, 0.5), 1) * (1 - cut)
+							).linlin(0, 1, cut, 1)
+							, density.linlin(0, 1, 400, 1300)
+						);
+
+						sig = HPF.ar(sig, cut.linexp(0.25, 1, 10, 21000))
+					};
+					sig
+				});
+
+				volume = \volume.kr(0).lag(4).dbamp;
+				sig = noise.scramble.clump(2).collect({
+					| s, i |
+					var leftSide, rightSide, pan;
+					pan = i / (noise.size / 2);
+					leftSide = PanArray.ar(4, s[0], pos: pan, width: density.linlin(0, 1, 2, 3));
+					rightSide = PanArray.ar(4, s[1], pos: pan, width: density.linlin(0, 1, 2, 3));
+					[leftSide, rightSide].flop.flatten;
+
+					[s[0], s[1]];
+				});
+				// sig = sig + RLPF.ar(Decay.ar( SelectX.ar(MouseY.kr(0, 3), Impulse.ar([0.5, 1, 2, 4])), 3) * sig, 50, 0.05, 4);
+				sig = LeakDC.ar(sig);
+
+				sig = Mix(sig).assertChannels(2);
+				sig = sig + SoftClipAmp8.ar([
+					LeakDC.ar(SelectXFocus.ar(MouseX.kr(0, noise.size - 1), noise.scramble, 0.25)),
+					LeakDC.ar(SelectXFocus.ar(MouseX.kr(0, noise.size - 1), noise.scramble, 0.25))
+				], 2, density.linlin(0, 1, 0, 2));
+
+				Out.ar(100, noise);
+
+				sig = Compander.ar(sig, sig.sum / 8, 0.6, 1/6, 1/8, 1, 5);
+				sig = -16.dbamp * sig * volume * EnvGen.kr(Env([0, 1, 1, 0], [10, 5, 20], releaseNode: 2),
+					gate: \gate.kr(1),
+					doneAction: 2
+				);
+
+				Out.ar(\out.ir(0), sig);
+			},
+			metadata:(
+				specs: (
+					volume:		ControlSpec(-40, 0,  			default: -40),
+					density: 	ControlSpec(0, 1, 				default: 0),
+					fx:			ControlSpec(0, ~chordSequenceLow.size - 0.5,
+																default: 0),
+					distAmt:	ControlSpec(0, 1, 				default: 0),
+					clip:		ControlSpec(0, 1, warp:\sin,	default: 0),
+					cut:		ControlSpec(0, 1, warp:\sin,	default: 0),
+				)
+			)
+			).addReplace;
+		};
+
+		~massDef.(\lesser, true);
+		~massDef.(\greater, false);
 
 
 	~resources.addAll [
@@ -74,216 +234,6 @@ State(\mass).initActions.add({
 		//Env([-1, 0, 1], [0.5, 0.5], [20, -20])
 	);
 
-	SynthDef(\lesser, {
-		var pulse, pulse2, phase, noise, noise2, jumps, phases, density, distAmt,
-		pulseAmt, freqFade, sig, freqs, freqMult, fx, clip, filtSig, volume,
-		bSig, a, b, c, d, e, f, g, h;
-
-		////////////////////////////////////////////////////////////////
-		// CONTROLS
-		density 	= \density.kr(0).lag(5);
-		fx 			= \fx.kr(0).lag(5);
-		clip 		= \clip.kr(5).lag(8);
-		distAmt		= \distAmt.kr(0);
-
-		////////////////////////////////////////////////////////////////
-		// CONTROLS
-		phase = LFNoise2.kr(0.1).range(0.06, 0.09);
-		pulse = (
-			(Impulse.ar(3) * WhiteNoise.ar(2))
-			+ (Impulse.ar(1, phase) * WhiteNoise.ar(2))
-			+ (Impulse.ar(6, phase) * WhiteNoise.ar(1))
-		);
-
-		jumps = 2.collect({
-			PanAz.ar(
-				~voiceCount, pulse,
-				pos: LFNoise2.kr(0.06).range(-1,1),
-				width: LFNoise2.kr(0.07).range(2 + (density), 2 + (density * 4))
-			)
-		}).sum;
-		jumps.assertChannels(~voiceCount);
-
-		jumps = jumps * EnvGen.kr(Env([0, 0, 1, 1], [4, 4, 20]), timeScale:5);
-		phases = jumps.collect({
-			| jump |
-			(2.0.rand + Integrator.ar(jump.abs.neg * 0.2, 1)) % (2 * pi);
-		});
-
-		pulseAmt = LFNoise2.kr(LFNoise2.kr(0.1).range(0.05, 0.2)).exprange(0.5, 1.0);
-
-		freqs = phases.collect({
-			| p, i |
-			Select.kr(
-				(fx.pow(Rand(1, 1)) * ~chordSequenceLow.size) + Rand(-0.25, 0.25), ~chordSequenceLow.flop[i]
-			);
-		});
-
-		noise = phases.collect({
-			| phase, i |
-			var sig, degree, freq, freq1, freq2, saw, hpEnv, scale, bump;
-			hpEnv = max(0, SinOsc.kr(1 / 100, phase.lag(0.1)).abs - density.linlin(0, 1, 0.55, 0.42)).lag(0.2);
-
-			freq = freqs[i];
-
-			if (i < 35) {
-				freq = freq * (density.linlin(0, 1, 1.0, 1 + Rand(-0.02, 0.02)) + [0.03.rand, 0.02.rand, 0.04.rand]);
-				saw = LFSaw.ar(freq).sum * density.range(0.4, 1.0);
-			} {
-				freq = freq * (density.linlin(0, 1, 1.0, Rand(-0.03, 0.03)) + [0.015.rand, 0.01.rand, 0.021.rand]);
-				saw = LFPulse.ar(freq, 0, density.range(0, 0.99)).sum * max(density - 0.5, 0) * 1;
-			};
-
-			sig = saw;
-			sig = (sig + (BrownNoise.ar(0.5 + density.linlin(0, 1, 0, 0.5)) * sig)) * hpEnv;
-
-			// sig = DistCurve(\mass1).ar(sig, 1, );
-			sig = Shaper.ar(
-				~distBuffer.bufnum,
-				sig * distAmt.linexp(0, 1, 0.1, 10),
-				mul: 1 / distAmt.linexp(0, 1, 0.05, 10)
-			);
-
-			sig = LPF.ar(sig, max(density.linexp(0, 1, 10, 14000) * hpEnv, 20), 1);
-
-			filtSig = HPF.ar(sig, clip.range(500, 18000), mul: clip.range(1, 4.0)) +
-			LPF.ar(sig, clip.range(20000, 40), mul:0);
-
-			sig = XFade2.ar(sig, filtSig, clip.range(-1, 1));
-
-			sig * LPF.ar(
-				in: LFPulse.ar(
-					freq: 	[20, 30, 60].choose,
-					iphase:	i % 2 * 0.5,
-					width:	LFNoise2.kr(0.1).linexp(-1, 1, density.linlin(0, 1, 0.9, 0.3) * clip.linlin(0, 1, 1, 0.01), clip.linlin(0, 1, 1, 0.001)).poll
-				).linlin(0, 1, 0.6 - clip.linexp(0, 1, 0.01, 0.6), 1),
-				freq: 20 + (density.linexp(0, 1, 40, 1600) * clip.linlin(0, 1, 1, 0.01))
-			);
-		});
-
-		volume = \volume.kr(0).lag(4);
-		sig = noise.clump(2).collect({
-			| s, i |
-			var leftSide, rightSide, pan;
-			pan = i / (noise.size / 2);
-			leftSide = PanArray.ar(4, s[0], pos: pan, width: density.linlin(0, 1, 2, 3));
-			rightSide = PanArray.ar(4, s[1], pos: pan, width: density.linlin(0, 1, 2, 3));
-			[leftSide, rightSide].flop.flatten;
-
-			[s[0], s[1]];
-		});
-
-		sig = Mix(sig).assertChannels(2);
-		sig = Compander.ar(sig, sig.sum / 8, 0.6, 1/6, 1/8, 1, 5);
-		sig = -16.dbamp * sig * volume * EnvGen.kr(Env([0, 1, 1, 0], [10, 5, 20], releaseNode: 2),
-			gate: \gate.kr(1),
-			doneAction: 2
-		);
-
-		Out.ar(\out.ir(0), sig);
-	}).addReplace;
-
-	SynthDef(\greater, {
-		var pulse, pulse2, phase, noise, noise2, jumps, phases, pulseAmt, freqFade, density, sig, freqs, fx, volume,
-		a, b, c, d, e, f, g, h, bSig, cut;
-
-		density = \density.kr(0).lag(5);
-		fx = \fx.kr(0).lag(5);
-
-		phase = LFNoise2.kr(0.1).range(0.06, 0.09);
-		pulse = ((Impulse.ar(3) * WhiteNoise.ar(2)) +
-			(Impulse.ar(1, phase) * WhiteNoise.ar(2)) +
-			(Impulse.ar(6, phase) * WhiteNoise.ar(1))
-		);
-
-		jumps = 2.collect({
-			PanAz.ar(
-				~voiceCount, pulse,
-				pos: LFNoise2.kr(0.06).range(-1, 1),
-				width: LFNoise2.kr(0.07).range(2 + (density * 10), 2 + (density * 20))
-			)
-		}).sum;
-
-		jumps = jumps * EnvGen.kr(Env([0, 0, 1, 1], [4, 4, 20]), timeScale:5);
-		phases = jumps.collect({
-			| jump |
-			(2.0.rand + Integrator.ar(jump.abs.neg * 0.2, 1)) % (2 * pi);
-		});
-
-		pulseAmt = LFNoise2.kr(LFNoise2.kr(0.2).range(0.1, 0.3)).exprange(0.5, 2.0);
-
-		freqs = phases.collect({
-			| p, i |
-			Select.kr(
-				(fx.pow(Rand(1, 5)) * 6) + Rand(-0.25, 0.25), ~chordSequenceHigh[i]
-			);
-		});
-
-		noise = phases.collect({
-			| phase, i |
-			var sig, degree, freq, freq1, freq2, saw, hpEnv, scale;
-			hpEnv = max(0, SinOsc.kr(0.007, phase.lag(0.2)).abs - density.exprange(0.9, 0.22));
-			freq = freqs[i];
-
-			if (i < 35) {
-				freq = freq * (density.range(1.0, 1.01) + [0.03.rand, 0.02.rand, 0.04.rand]);
-				saw = LFSaw.ar(freq).sum * density.range(0.2, 1.0);
-			} {
-				freq = freq * (density.range(1, 1) + [0.03.rand, 0.01.rand, 0.02.rand]);
-				saw = LFSaw.ar(freq).sum * max(density - 0.5, 0);
-			};
-
-			sig = saw;
-			cut = \cut.kr(0.0).lag(5);
-
-			sig = (WhiteNoise.ar(1) + sig) * hpEnv;
-			sig = sig + (jumps[i] * pulseAmt * density.range(0.3, 2));
-			sig = HPF.ar(sig, 20000 - (density.range(9000, 20000) * hpEnv));
-			sig = sig * LPF.ar(
-				LFPulse.ar(
-					[20, 30, 60].choose,
-					(i % 2) * 0.5,
-					LFNoise2.kr(0.1).exprange(density.range(0.9, 0.5), 1) * (1 - cut)
-				).linlin(0, 1, cut, 1)
-				, density.linlin(0, 1, 400, 1300)
-			);
-
-			sig = HPF.ar(sig, cut.linexp(0.25, 1, 10, 21000))
-		});
-
-		volume = \volume.kr(0).lag(4);
-		sig = noise.clump(2).collect({
-			| s, i |
-			var a, b, c, d, e, f, g, h, n, pan;
-			pan = (i / (noise.size / 2)) * 2 - 1;
-			#a, c, n, e, g = PanAz.ar(5, s[0], pos: pan, width: density.linlin(0, 1, 2, 3), );
-			#b, d, n, f, h = PanAz.ar(5, s[1], pos: pan, width: density.linlin(0, 1, 2, 3), );
-			[a, b, c, d, e, f, g, h];
-
-			[s[0], s[1]];
-		});
-		sig = Mix(sig);
-		sig = Compander.ar(sig, sig.sum / 8, 0.6, 1/6, 1/8, 1, 5);
-		sig = -16.dbamp * sig * volume * EnvGen.kr(Env([0, 1, 1, 0], [10, 5, 20], releaseNode: 2),
-			gate: \gate.kr(1),
-			doneAction: 2
-		);
-		// bSig = Mix(noise.collect({ |n, i| PanB2.ar(n, (i / noise.size).linlin(0, 1, -1, 1)) }));
-		//
-		// bSig = Compander.ar(bSig, bSig.sum / 4, 0.6, 1/6, 1/8, 1, 5);
-		// bSig = -12.dbamp * bSig * volume * EnvGen.kr(Env([0, 1, 1, 0], [10, 5, 20], releaseNode: 2),
-		// 	gate: \gate.kr(1),
-		// 	doneAction: 2
-		// );
-		//
-		// #a, c, d, b = DecodeB2.ar(4, bSig[0], bSig[1], bSig[1], 0.5);
-		// #e, g, h, f = DecodeB2.ar(4, bSig[0], bSig[1], bSig[1], 0.5);
-		//
-		//Out.ar(\out.ir(0), [a, b, c, d, e, f, g, h]);
-		//#a, b = B2UHJ.ar(*bSig);
-		//Out.ar(\out.ir(0), [a, b]);
-		Out.ar(\out.ir(0), sig);
-	}).addReplace;
 });
 
 State(\mass).startActions.add {
