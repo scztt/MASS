@@ -242,6 +242,7 @@ State(\mass).initActions.add({
 		[-1, 0, 1],
 		//Env([-1, 0, 1], [0.5, 0.5], [20, -20])
 	);
+	~t1 = Twister(\default);
 
 });
 
@@ -279,71 +280,32 @@ SynthDef(\let, {
 });
 	////////////////////////////////////////////////////////////////////////////////
 	// LOW
+	~t1.row(0)[0].knobCV 		= ~ctrl.lowVolume;
+	~t1.row(0)[1].knobCV		= ~ctrl.lowDensity;
+	~t1.row(0)[2].knobCV		= ~ctrl.lowDistAmt;
 
+	~t1.row(1)[0].knobCV 		= ~ctrl.lowFx;
+	~t1.row(1)[3].knobCV		= ~ctrl.lowClip;
 
 State(\mass).startActions.add({
-	~knobs = List();
+	~t1.row(0)[0].buttonCV		= ~ctrl.lowToggle;
+	~t1.row(0)[0].toggle 		= true;
+	~t1.row(0)[0].ledColor_(Color.grey());
 
 	////////////////////////////////////////////////////////////////////////////////
-	// low
-	~controls[0..4].do({
-		|cv, i|
-		~knobs.add(
-			~lc.knobs[3 + (i * 4)].cv_(cv)
-		);
-	});
+	// HIGH
+	~t1.row(2)[0].knobCV 		= ~ctrl.highVolume;
+	~t1.row(2)[1].knobCV		= ~ctrl.highDensity;
+	~t1.row(2)[2].knobCV		= ~ctrl.highDistAmt;
 
-	// FX controls
-	~lc.knobRows[2][2].step = 1/400;
-	~lc.knobRows[3][2].step = 1/400;
+	~t1.row(3)[0].knobCV 		= ~ctrl.highFx;
+	~t1.row(3)[3].knobCV		= ~ctrl.highClip;
 
-	~lowTrigger = ~lc.buttons[6].default();
-	~lowTrigger.toggle = true;
-	~lowTrigger.buttonOnActions.add(e{
-		Log(\mass, "low started");
-		if (~lowSynth.notNil) { ~lowSynth.release() };
-
-		~lowSynth = Synth.controls(\lesser, [
-			\volume: 		~lowVolume,
-			\density: 		~lowDensity,
-			\fx: 			~lowFx,
-			\clip: 			~lowClip,
-			\drop:			~lowDrop,
-		]);
-	});
-	~lowTrigger.buttonOffActions.add(e{
-		Log(\mass, "low stopped");
-		~lowSynth.release;
-		~lowSynth = nil;
-	});
-
+	~t1.row(2)[0].buttonCV		= ~ctrl.highToggle;
+	~t1.row(2)[0].toggle 		= true;
+	~t1.row(2)[0].ledColor_(Color.grey());
 
 	////////////////////////////////////////////////////////////////////////////////
-	// high
-	~controls[5..8].do({
-		|cv, i|
-		~knobs.add(
-			~lc.knobs[2 + (i * 4)].cv_(cv)
-		);
-	});
-	~highTrigger = ~lc.buttons[5].default();
-	~highTrigger.toggle_(true);
-	~highTrigger.buttonOnActions.add(e{
-		Log(\mass, "high started");
-		if (~highSynth.notNil) { ~highSynth.release() };
-
-		~highSynth = Synth.controls(\greater, [
-			\volume: 		~highVolume,
-			\density: 		~highDensity,
-			\fx: 			~highFx,
-			\cut: 			~highCut
-		]);
-	});
-	~highTrigger.buttonOffActions.add(e{
-		Log(\mass, "high stopped");
-		~highSynth.release;
-		~highSynth = nil;
-	});
 
 	////////////////////////////////////////////////////////////////////////////////
 	// LET
