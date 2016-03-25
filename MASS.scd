@@ -301,6 +301,57 @@ State(\mass).startActions.add({
 	~t1.row(2)[0].ledColor_(Color.grey());
 
 	////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////
+	// TRIGGERS
+	~connections.free;
+	~connections = ConnectionList.makeWith {
+		~ctrl.lowToggle.signal(\on).connectTo({
+			Log(\mass, "low started");
+			~t1.row(0)[0].ledColor_(Color.green());
+
+			if (~lowSynth.notNil) { ~lowSynth.release() };
+
+			~lowSynth = Synth('mass.lesser', [
+				\volume: 	~ctrl.lowVolume.asMap,
+				\density: 	~ctrl.lowDensity.asMap,
+				\fx: 		~ctrl.lowFx.asMap,
+				\clip: 		~ctrl.lowClip.asMap,
+				\distAmt:	~ctrl.lowDistAmt.asMap,
+				\distBuffer: ~distBuffer
+			]);
+		}.e);
+		~ctrl.lowToggle.signal(\off).connectTo({
+			Log(\mass, "low stopped");
+			~t1.row(0)[0].ledColor_(Color.grey());
+
+			~lowSynth.release;
+			~lowSynth = nil;
+		}.e);
+
+		~ctrl.highToggle.signal(\on).connectTo({
+			Log(\mass, "high started");
+			~t1.row(2)[0].ledColor_(Color.green());
+
+			if (~highSynth.notNil) { ~highSynth.release() };
+
+			~highSynth = Synth('mass.greater', [
+				\volume: 	~ctrl.highVolume.asMap,
+				\density: 	~ctrl.highDensity.asMap,
+				\fx: 		~ctrl.highFx.asMap,
+				\cut: 		~ctrl.highCut.asMap,
+				\distAmt:	~ctrl.highDistAmt.asMap,
+				\distBuffer: ~distBuffer
+			]);
+		}.e);
+		~ctrl.highToggle.signal(\off).connectTo({
+			Log(\mass, "high stopped");
+			~t1.row(2)[0].ledColor_(Color.grey());
+
+			~highSynth.release;
+			~highSynth = nil;
+		}.e);
+	};
+
 
 	////////////////////////////////////////////////////////////////////////////////
 	// LET
