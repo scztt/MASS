@@ -387,12 +387,12 @@ State(\mass).startActions.add({
 	});
 
 	////////////////////////////////////////////////////////////////////////////////
-	~letTrigger = ~lc.buttons[7].default();
-	~letTrigger.buttonOnActions.add(e{
-		Log(\mass, "let triggered");
-		Synth(\let);
-	});
 	// LET
+	// ~letTrigger = ~lc.buttons[7].default();
+	// ~letTrigger.buttonOnActions.add(e{
+	// 	Log(\mass, "let triggered");
+	// 	Synth(\let, args:[\freq, 140]);
+	// });
 
 });
 
