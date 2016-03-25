@@ -168,11 +168,11 @@ State(\mass).initActions.add({
 					| s, i |
 					var leftSide, rightSide, pan;
 					pan = i / (noise.size / 2);
-					leftSide = PanArray.ar(4, s[0], pos: pan, width: density.linlin(0, 1, 2, 3));
-					rightSide = PanArray.ar(4, s[1], pos: pan, width: density.linlin(0, 1, 2, 3));
+					leftSide = PanArray.ar(2, s[0], pos: pan, width: 1);
+					rightSide = PanArray.ar(2, s[1], pos: pan, width: 1);
 					[leftSide, rightSide].flop.flatten;
-
-					[s[0], s[1]];
+					// structure: [[lf, lr], [rf, rr]] -> [[lf, rf], [lr, rr]] -> [lf, lr, rf, rr]
+					//[s[0], s[1]];
 				});
 				// sig = sig + RLPF.ar(Decay.ar( SelectX.ar(MouseY.kr(0, 3), Impulse.ar([0.5, 1, 2, 4])), 3) * sig, 50, 0.05, 4);
 				sig = LeakDC.ar(sig);
