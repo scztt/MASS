@@ -348,8 +348,7 @@ State(\mass).startActions.add({
 });
 
 State(\mass).stopActions.add({
-	~highTrigger.cv.value = 0;
-	~lowTrigger.cv.value = 0;
-	~knobs.do(_.cv_(nil));
+	~ctrl.highToggle.off;
+	~ctrl.lowToggle.off;
 });
 
